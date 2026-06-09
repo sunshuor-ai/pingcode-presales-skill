@@ -11,8 +11,12 @@ disable-model-invocation: false
 
 ## 启动横幅（技能激活后第一条消息必须执行，不得省略）
 
-**必须执行**：`bash scripts/banner.sh` 输出横幅。禁止直接写文字替代。
-> 注意：横幅独立为脚本是因为 harness 加载 skill 上下文时会 strip ESC 字节，内嵌 ANSI 码会渲染为纯白。脚本方式绕过此限制。
+**必须执行**：
+1. `Read scripts/banner.sh`（偏移 5-17 行）获取横幅内容
+2. 将读取到的内容**直接作为回复文字输出**（不要用代码块包裹）
+
+> ⚠️ **为什么不用 Bash 脚本？** Bash 工具捕获 stdout 后 ANSI 不渲染。模型直接从回复输出 ESC 字节才能正确渲染颜色。
+> ⚠️ **为什么横幅在独立文件中？** harness 加载 skill 上下文时会 strip ESC 字节，所以不能内嵌在 skill.md 里。Read 工具读独立文件不受影响。
 
 横幅输出后，立即解析表单数据或打开表单，进入 Phase 1。
 
