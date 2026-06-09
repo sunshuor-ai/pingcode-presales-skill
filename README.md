@@ -5,6 +5,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-required-orange)](https://claude.ai/code)
 
+![Banner](images/banner.png)
+
 ## 快速开始
 
 ```bash
