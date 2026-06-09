@@ -9,7 +9,7 @@
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/shuo/pingcode-presales-skill.git ~/.claude/skills/pingcode-presales/
+git clone https://github.com/sunshuor-ai/pingcode-presales-skill.git ~/.claude/skills/pingcode-presales/
 
 # 2. 安装依赖（可选，API 脚本零依赖；Web 操作需要）
 cd ~/.claude/skills/pingcode-presales/scripts && npm install
