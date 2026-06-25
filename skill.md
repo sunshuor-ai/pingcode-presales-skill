@@ -900,7 +900,9 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | `scripts/pingcode_workload.js` | 工时随机登记（登记人=assignee，日期对齐北京当日，report_by_id 必填） |
 | `scripts/vertical_template.js` | 行业模板 YAML 校验器（kind/group/options，CLI 无参校验全部） |
 | `references/verticals/` | 行业结构模板（散文+types 块；含 _README 格式说明、汽车电子/医疗器械 打样） |
-| `scripts/pingcode_tags.js` | 标签生成器（行业术语词典+类型分配） |
+| `scripts/pingcode_tags.js` | 标签词典（行业术语，导出 INDUSTRY_TERMS/INDUSTRY_DEFAULT） |
+| `scripts/pingcode_tag_logic.js` | 标签纯逻辑（词典锚定抽词 extractTags + 关键词匹配 matchTags，可单测） |
+| `scripts/pingcode_tag_apply.js` | 标签自动打标 CLI（扫已建项目→抽~12标签→并发贴, 幂等+dry+报告） |
 | `templates/` | client_profile / blueprint / delivery_summary / form.html 模板 |
 | `templates/form.html` | 客户信息收集表单 |
 

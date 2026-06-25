@@ -165,6 +165,17 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 | `/v1/ship/ticket_types` | GET | 工单类型列表 |
 | `/v1/ship/ticket_priorities` | GET | 工单优先级列表 |
 
+## 标签 (work_item_tags, 2026-06-25 实测)
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/v1/project/tags` | POST | 建标签 `{name, project_id, color}` |
+| `/v1/project/tags?project_id=&page_size=100` | GET | 列项目标签（page_size ≤100） |
+| `/v1/project/work_items/{id}/tags` | POST | 给工作项贴标签 `{tag_id}`（幂等） |
+| `/v1/project/tags/{id}` | DELETE | 删标签 |
+
+> 标签为开放 API 正常能力（无企业鉴权限制）。封装：`createTag / listTags / addWorkItemTag`。自动打标：`pingcode_tag_apply.js`（词典锚定抽词 + 关键词匹配并发贴；标签质量取决于词典是否含项目域词，必要时补 `verticals/<行业>.md` 术语）。
+
 ## 用户与目录
 
 | 端点 | 方法 | 用途 |
