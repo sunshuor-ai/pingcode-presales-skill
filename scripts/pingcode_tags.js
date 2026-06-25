@@ -96,4 +96,4 @@ function generateByType(opts = {}) {
   };
 }
 
-module.exports = { generate, generateByType, INDUSTRY_TERMS };
+module.exports = { generate, generateByType, INDUSTRY_TERMS, INDUSTRY_DEFAULT };
