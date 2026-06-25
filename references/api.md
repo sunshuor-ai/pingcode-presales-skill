@@ -223,4 +223,9 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 24. **`duration` 单位是小时且 0<d≤24**: 超出回报 `100004 "duration不在[0,24]范围内"`。`type`(workload_type id) 可选。
 25. **登记人取该工作项 assignee**: "谁干的活谁登工时"，多人环境更真实；assignee 为空时兜底随机用户池。
 
+### 性能 / 限流（2026-06-25 实测）
+26. **限流宽松，禁止纯串行创建**: 实测 GET 并发 40、POST 并发 15 均 **0×429**；单 POST ~440ms。慢的唯一原因是串行。同级无依赖对象**必须** `batchCreateParallel(concurrency=10)` 并发，无需 sleep。串行 138 工作项 ~1分多，层内并发 ~15-20s。
+27. **PingCode 无批量创建端点**: API/UI 都逐条。提速只能靠**并发重叠逐条 POST**（按层同步、层内全并发），不存在 bulk-create。
+28. **`batchCreateParallel` 结果保序**: results 与输入一一对齐（失败位 null），按 `defs[i] → results[i]` 接父子层级；createFn 第二参为 index。
+
 ### 字段纠正（2026-05-18）

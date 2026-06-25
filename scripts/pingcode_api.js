@@ -601,27 +601,29 @@ async function batchCreate(items, createFn, delay = DEFAULT_DELAY) {
   return { results, errors, total: items.length, ok: results.length, fail: errors.length };
 }
 
-async function batchCreateParallel(items, createFn, { concurrency = 5, delay = 100 } = {}) {
+async function batchCreateParallel(items, createFn, { concurrency = 10, delay = 0 } = {}) {
   /**
-   * 并发批量创建（同级无依赖时使用，如同一 Phase 下的多个 Epic）
-   * 每批 concurrency 个并发，批间等待 delay ms
-   * 相比串行 batchCreate 约快 4-5x
+   * 并发批量创建（同级无依赖时使用，如同一 Phase 下的多个 Epic）。
+   * 实测 PingCode 限流宽松：POST 并发 15、GET 40 均无 429；单 POST ~440ms，串行才是瓶颈。
+   * concurrency 默认 10（安全且 ~5x），delay 默认 0（无需批间睡眠）。
+   * results 与 items **一一对齐**（失败位为 null），便于按 def[i] → result[i] 接父子层级。
+   * createFn(item, index) 可拿到下标。
    */
-  const results = [];
+  const results = new Array(items.length).fill(null);
   const errors = [];
   for (let i = 0; i < items.length; i += concurrency) {
-    const batch = items.slice(i, i + concurrency);
-    const settled = await Promise.allSettled(batch.map(item => createFn(item)));
-    for (let j = 0; j < settled.length; j++) {
-      if (settled[j].status === 'fulfilled') {
-        results.push(settled[j].value);
-      } else {
-        errors.push({ item: batch[j], error: settled[j].reason?.message || String(settled[j].reason) });
-      }
-    }
-    if (i + concurrency < items.length) await sleep(delay);
+    const idxs = [];
+    for (let k = i; k < Math.min(i + concurrency, items.length); k++) idxs.push(k);
+    const settled = await Promise.allSettled(idxs.map(k => createFn(items[k], k)));
+    settled.forEach((s, m) => {
+      const k = idxs[m];
+      if (s.status === 'fulfilled') results[k] = s.value;
+      else errors.push({ index: k, item: items[k], error: s.reason?.message || String(s.reason) });
+    });
+    if (delay && i + concurrency < items.length) await sleep(delay);
   }
-  return { results, errors, total: items.length, ok: results.length, fail: errors.length };
+  const ok = results.filter(r => r !== null).length;
+  return { results, errors, total: items.length, ok, fail: errors.length };
 }
 
 // ============================================================

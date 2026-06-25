@@ -36,7 +36,7 @@ disable-model-invocation: false
 1. **内容贴合客户业务** — 绝不使用"示例项目""测试数据"等通用名称
 2. **先确认后执行** — Phase 3 方案必须经用户确认，再进入 Phase 4
 3. **推荐 hybrid 项目** — 客户不确定类型时一律推混合项目（可关功能，不可反向）
-4. **API 间隔 ≥200ms** — 使用已验证的字段名，详见 `references/api.md`；同级无依赖工作项用 `batchCreateParallel`（concurrency=5）并发创建
+4. **同级必并发，禁止纯串行** — 实测 PingCode 限流宽松（POST 并发 15 / GET 40 无 429，单 POST ~440ms）。同级无依赖对象**必须**用 `batchCreateParallel`（concurrency=10，无需 sleep）并发；串行 + sleep 建一层是错误做法。字段名详见 `references/api.md`
 5. **每个事项必须完整** — 描述、子步骤、时间、层级，四者缺一不可
 6. **Phase 5 强制自动质检** — Phase 4 完成后必须自动触发质检，未达标项自动修复，不通过不得交付
 
@@ -582,14 +582,19 @@ pf().catch(e => console.error(e));
 
 **构建顺序铁律**: 项目/工作项 → Wiki → Ship(产品+工单+需求) → TestHub。后三步依赖前一步的 ID，禁止跨模块并行。
 
-**同级并发加速（推荐）**：在同一模块内，同一层级的无依赖对象用 `batchCreateParallel` 并发：
+**同级必并发（铁律，非可选）**：⚠️ 实测 PingCode 限流宽松（POST 并发 15 无 429，单 POST ~440ms），**搭建慢的唯一原因就是串行**。同级无依赖对象**必须**用 `batchCreateParallel`（concurrency=10，无需 sleep），**纯串行 + sleep(200) 建一层是错误做法**（138 工作项串行 ~1分多 → 层内并发 ~15-20s）。
+
+**按层同步 + 层内全并发** —— 必须一层层建（子项要父 id），但同层兄弟全并发；`results` 与输入**一一对齐**（失败位 null），便于接父子：
 ```javascript
-// 同一 Phase 下的多个 Epic（互不依赖）→ 并发创建
-const epics = await api.batchCreateParallel(epicDefs, def => api.createWorkItem(token, def, baseUrl));
-// 所有项目下的 Wiki Space（互不依赖）→ 并发创建
-const spaces = await api.batchCreateParallel(spaceDefs, def => api.createWikiSpace(token, def, baseUrl));
+// 第 N 层：并发建本层全部，results[i] 对齐 defs[i]
+const { results: epics } = await api.batchCreateParallel(epicDefs,
+  def => api.createWorkItem(token, def, baseUrl), { concurrency: 10 });
+// 下一层依赖上层 id：等本层并发完成，再并发建下一层
+const featDefs = epics.flatMap((ep, i) => ep ? epicDefs[i].features.map(f => ({ ...f, parentId: ep.id })) : []);
+const { results: feats } = await api.batchCreateParallel(featDefs,
+  def => api.createWorkItem(token, def, baseUrl), { concurrency: 10 });
 ```
-需要返回 ID 才能创建下级的对象（如 Feature 依赖 Epic ID），必须等上一级并发完成再串行下一级。
+顺序：`阶段(并发) → 里程碑/史诗/需求(并发) → 特性(并发) → 故事(并发) → 任务/缺陷(并发)`；phase_id 修正、交付物、工时登记同样并发。跨模块仍串行（构建顺序铁律），但模块内同级一律并发。
 
 ### 4.1 各对象必填字段速查矩阵
 
