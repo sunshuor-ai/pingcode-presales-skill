@@ -728,9 +728,36 @@ function randomParticipants(users, assigneeId, maxCount = 3) {
   return randomPick(users, count, assigneeId ? [assigneeId] : []);
 }
 
+// ============================================================
+// 标签 (work_item_tags) — 端点 2026-06-25 实测
+// ============================================================
+async function createTag(token, opts, baseUrl = DEFAULT_BASE) {
+  /** opts: { name*, projectId*, color } */
+  const body = { name: opts.name, project_id: opts.projectId };
+  if (opts.color) body.color = opts.color;
+  const resp = await fetch(`${baseUrl}/v1/project/tags`, { method: "POST", headers: H(token), body: JSON.stringify(body) });
+  if (!resp.ok) throw new Error(`创建标签失败: ${await resp.text()}`);
+  return resp.json();
+}
+
+async function listTags(token, projectId, baseUrl = DEFAULT_BASE) {
+  const resp = await fetch(`${baseUrl}/v1/project/tags?project_id=${projectId}&page_size=100`, { headers: H(token) });
+  if (!resp.ok) throw new Error(`查询标签失败: ${await resp.text()}`);
+  return (await resp.json()).values || [];
+}
+
+async function addWorkItemTag(token, workItemId, tagId, baseUrl = DEFAULT_BASE) {
+  /** 给工作项追加一个标签（幂等：已贴再贴不报错） */
+  const resp = await fetch(`${baseUrl}/v1/project/work_items/${workItemId}/tags`, { method: "POST", headers: H(token), body: JSON.stringify({ tag_id: tagId }) });
+  if (!resp.ok) throw new Error(`贴标签失败: ${await resp.text()}`);
+  return resp.json();
+}
+
 module.exports = {
   // 认证
   getToken, sleep,
+  // 标签
+  createTag, listTags, addWorkItemTag,
   // 项目
   createProject, getProject, updateProject, cloneProject, listProjects,
   listProjectMembers, addProjectMember,
