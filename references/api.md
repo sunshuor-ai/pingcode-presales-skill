@@ -237,4 +237,9 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 34. **测试用例 work-item 型常未启用**: `1003104 项目中不存在该工作项类型`。测试管理走 **TestHub**（`/v1/testhub`），不要用 work-item 型测试用例。
 35. **phase_id 子项不可靠继承 → 全量 PATCH**: 子项创建时父若无 phase 则完全悬空。build 末尾对每个需求/任务/自定义按目标阶段全量 PATCH `phase_id`；自检「无阶段工作项数=0」。**跨阶段父子允许**（子可在更晚阶段，对应 V 模型逐级下沉）。
 
+### 测试管理 / 双向追溯（2026-06-25 实测）
+36. **TestHub 测试库/套件/用例 走开放 API 正常**：`createTestLibrary / createTestSuite / createTestCase(直接POST,不传state_id) / createTestPlan / createTestRun`，并发可用。daocloud-test case_types：信息类/功能需求/评审类。
+37. **测试用例↔工作项关联(`story-relations`) 开放 API 只认「用户故事」**：`POST /v1/testhub/cases/{id}/story-relations {story_id}` 死校验 story_id 必须是用户故事（`100373 不是一个用户故事`），**需求/任务一律被拒**（试遍 story_id+type/work_item_type、`/relations`、`/requirement-relations`、PUT、数组…全失败）。UI/内部 API 能把需求挂进去（GET 关系里 `story` 字段 type=需求、url 走 story-relations），但**开放 API 不暴露此能力**。
+38. **需求驱动(ASPICE)项目的「需求↔用例」横向追溯，开放 API 做不了** → 选项：①Web 自动化驱动 UI（需有效 UI 登录态）②当 UI 手工步、交付文档给「用例↔需求」覆盖对照表 ③结构上用 用户故事 做测试桥接(与需求驱动冲突,不推荐)。**纵向追溯（需求多级分解树 parent_id）开放 API 已可建**，是 ASPICE 追溯的主干。
+
 ### 字段纠正（2026-05-18）
