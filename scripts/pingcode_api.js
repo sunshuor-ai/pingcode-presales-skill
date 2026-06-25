@@ -514,9 +514,18 @@ async function listParticipants(token, principalType, principalId, baseUrl = DEF
 // 工时 (跨模块通用)
 // ============================================================
 async function createWorkload(token, opts, baseUrl = DEFAULT_BASE) {
-  /** opts: { principalType*, principalId*, type*, duration*, reportAt, description } */
-  const body = { principal_type: opts.principalType, principal_id: opts.principalId, type: opts.type, duration: opts.duration };
+  /**
+   * opts: { principalType*, principalId*, duration*, reportById*, reportAt*, type, description }
+   * - duration: 小时, 必须 0 < d ≤ 24
+   * - reportById: 登记人 user id (企业/client_credentials 鉴权必填, 否则 100396 "登记人不能为空")
+   * - reportAt: Unix秒, 须对齐北京当日0点且不晚于今天 (否则 100810 "登记日期不能在当天之后")
+   *             bjDay = ts => ts - ((ts + 8*3600) % 86400)
+   * - type: workload_type id (GET /v1/workload_types, 可选; 缺省后端不分类)
+   */
+  const body = { principal_type: opts.principalType, principal_id: opts.principalId, duration: opts.duration };
+  if (opts.reportById) body.report_by_id = opts.reportById;   // ⚠️ 字段是 report_by_id, 不是 reported_by/owner_id
   if (opts.reportAt) body.report_at = opts.reportAt;
+  if (opts.type) body.type = opts.type;
   if (opts.description) body.description = opts.description;
   const resp = await fetch(`${baseUrl}/v1/workloads`, { method: "POST", headers: H(token), body: JSON.stringify(body) });
   if (!resp.ok) throw new Error(`创建工时失败: ${await resp.text()}`);

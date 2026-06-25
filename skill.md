@@ -279,8 +279,15 @@ open ~/.claude/skills/pingcode-presales/templates/form.html
 - 按比例分配工作项时间线: 完成(~35%) / 进行中(~15%) / 待开始(~50%)
 - 自动生成 2 个历史 Sprint，已完成工作项关联对应 Sprint
 - Bug 按收敛曲线分布: 早期集中发现 → 后期逐步修复
-- 每个已完成工作项生成随机工时记录
 - 引擎: `pingcode_historical.js`
+
+#### 工时登记（随机模拟）
+- **范围**: 只登可执行层级 story/task/bug（阶段/里程碑/需求/史诗/特性不登）；start_at 晚于今天的跳过
+- **量**: 单项总量 ≈ `estimated_workload × 随机(0.3~1.0)`；拆 1~3 条（受 总量/6 约束），单条 ≤8h、≥1h
+- **日期**: 在 `[start, min(end, 今天)]` 均匀铺开 → 对齐北京当日0点 → 不晚于今天
+- **登记人**: `report_by_id` = 该工作项负责人(assignee)，兜底随机用户池（谁干的活谁登工时，企业鉴权必填）
+- **类型**: 按标题关键词映射 设计/测试/研发 → `workload_type` id
+- 引擎: `pingcode_workload.js`（`--identifiers=A,B` 限定项目，`--dry` 预览）
 
 #### 自定义字段
 - Web 通道创建，每项目 4 个字段 (单选/多选/单行/多行)
@@ -559,7 +566,7 @@ pf().catch(e => console.error(e));
 
 ---
 
-按顺序执行: `Pre-flight探测 → 认证 → 项目 → 获取用户列表 → 创建阶段(PMP) → 里程碑(挂阶段) → 需求(产品线,挂阶段) → 史诗(phase_id关联阶段) → Feature→Story→Task/Bug(含随机负责人+关注人+描述+phase_id) → Sprint(含历史) → 自定义字段(Web) → 标签 → Wiki → Ship产品空间 → 工单(需 product_id+type_id+priority_id) → 需求(需 product_id) → 测试库 → 套件 → 用例(用探测到的 type_id) → 计划 → 执行记录`
+按顺序执行: `Pre-flight探测 → 认证 → 项目 → 获取用户列表 → 创建阶段(PMP) → 里程碑(挂阶段) → 需求(产品线,挂阶段) → 史诗(phase_id关联阶段) → Feature→Story→Task/Bug(含随机负责人+关注人+描述+phase_id) → Sprint(含历史) → 工时登记(模拟,登记人=assignee) → 自定义字段(Web) → 标签 → Wiki → Ship产品空间 → 工单(需 product_id+type_id+priority_id) → 需求(需 product_id) → 测试库 → 套件 → 用例(用探测到的 type_id) → 计划 → 执行记录`
 
 **构建顺序铁律**: 项目/工作项 → Wiki → Ship(产品+工单+需求) → TestHub。后三步依赖前一步的 ID，禁止跨模块并行。
 
@@ -843,7 +850,8 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | `references/web_ops.md` | Web 独占操作（自定义字段/工作流/仪表盘/自动化/权限） |
 | `scripts/pingcode_api.js` | API 封装库（40+ 端点，含随机用户派发） |
 | `scripts/pingcode_web.js` | Web 操作封装库（Puppeteer+Edge，登录+截图+配置） |
-| `scripts/pingcode_historical.js` | 历史数据模拟引擎（比例分配+收敛曲线+Sprint历史+工时记录） |
+| `scripts/pingcode_historical.js` | 历史数据模拟引擎（比例分配+收敛曲线+Sprint历史） |
+| `scripts/pingcode_workload.js` | 工时随机登记（登记人=assignee，日期对齐北京当日，report_by_id 必填） |
 | `scripts/pingcode_tags.js` | 标签生成器（行业术语词典+类型分配） |
 | `templates/` | client_profile / blueprint / delivery_summary / form.html 模板 |
 | `templates/form.html` | 客户信息收集表单 |

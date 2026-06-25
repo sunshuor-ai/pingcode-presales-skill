@@ -151,8 +151,8 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 | 端点 | 方法 | 用途 |
 |------|------|------|
 | `/v1/participants` | POST/GET/DELETE | 关注人 (需 principal_type + principal_id) |
-| `/v1/workloads` | POST/GET/DELETE | 工时记录 |
-| `/v1/workload_types` | GET | 工时类型 |
+| `/v1/workloads` | POST/GET/DELETE | 工时记录 (POST 需 principal_type+principal_id+duration+report_by_id+report_at) |
+| `/v1/workload_types` | GET | 工时类型 (POST workloads 的 type 可选) |
 
 ## 产品管理 Ship
 
@@ -216,5 +216,11 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 19. **交付物强制**: 混合/瀑布项目每个 Story/Task 必须创建交付物（`POST /v1/project/deliverables`），格式为具体可验证的产出物名称。
 20. **内容填充不可省略**: Wiki 页面(content+format_type)和测试用例(steps数组)创建后必须填充实际内容，不能留空壳。
 21. **Ship 产品前置**: 工单和需求依赖 product_id，必须先于工单/需求创建 Ship 产品空间。
+
+### 工时登记（2026-06-25 实测）
+22. **登记人字段是 `report_by_id`**: 企业/client_credentials 鉴权下 POST `/v1/workloads` 必填，缺失回报 `100396 "登记人不能为空"`。**不是** `reported_by`/`owner_id`/`member_id`/`user_id` 等（实测 20+ 候选全失败）。GET 工时对象里展开成 `report_by` 对象，但写入用 `report_by_id`。
+23. **`report_at` 须对齐北京当日0点且不晚于今天**: 否则回报 `100810 "工时的登记日期不能在当天之后"`。对齐: `bjDay = ts => ts - ((ts + 8*3600) % 86400)`，再 `Math.min(bjDay(ts), bjDay(now))`。
+24. **`duration` 单位是小时且 0<d≤24**: 超出回报 `100004 "duration不在[0,24]范围内"`。`type`(workload_type id) 可选。
+25. **登记人取该工作项 assignee**: "谁干的活谁登工时"，多人环境更真实；assignee 为空时兜底随机用户池。
 
 ### 字段纠正（2026-05-18）
