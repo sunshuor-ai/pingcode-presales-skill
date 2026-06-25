@@ -228,4 +228,13 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 27. **PingCode 无批量创建端点**: API/UI 都逐条。提速只能靠**并发重叠逐条 POST**（按层同步、层内全并发），不存在 bulk-create。
 28. **`batchCreateParallel` 结果保序**: results 与输入一一对齐（失败位 null），按 `defs[i] → results[i]` 接父子层级；createFn 第二参为 index。
 
+### 工作项层级/阶段关系（2026-06-25 daocloud-test 实测，**因环境而异，必自检**）
+29. **「什么挂什么」因环境而异**：Phase 4 前跑关系自检矩阵（建1阶段+各类型单条试探→读→删），按真实结果建，勿照搬上一环境。睿恩 `需求✗task`、daocloud-test `需求✓task`，同一规则两环境相反。
+30. **需求不挂阶段**: `需求 parent_id=阶段` → `100319`。顶层需求用 `phase_id` 关联阶段，不用 parent_id。
+31. **子需求挂需求 ✓**: `需求` 嵌 `需求`（parent_id），这是「多级需求」骨架的实现。
+32. **任务挂需求 因环境而异**: 睿恩 ✗(100319，改用子需求)，daocloud-test ✓。必测。
+33. **里程碑挂阶段用 parent_id**: `里程碑 parent_id=阶段` → 200，结构嵌在阶段下。**phase_id 对里程碑无效**（PATCH 200 但仍悬空）。且**别把里程碑放进 phase_id 批量修正**，否则连累整批。
+34. **测试用例 work-item 型常未启用**: `1003104 项目中不存在该工作项类型`。测试管理走 **TestHub**（`/v1/testhub`），不要用 work-item 型测试用例。
+35. **phase_id 子项不可靠继承 → 全量 PATCH**: 子项创建时父若无 phase 则完全悬空。build 末尾对每个需求/任务/自定义按目标阶段全量 PATCH `phase_id`；自检「无阶段工作项数=0」。**跨阶段父子允许**（子可在更晚阶段，对应 V 模型逐级下沉）。
+
 ### 字段纠正（2026-05-18）

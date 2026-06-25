@@ -488,6 +488,25 @@ GET /v1/directory/users           → 取用户池 (assignee/participant)
 
 > **Why**: 连续 3 个项目都在测试用例/工单/需求创建阶段因 ID 不匹配反复失败，浪费大量时间。Pre-flight 一步到位解决。
 
+### 3.8b 关系自检矩阵（强制：Phase 4 批量建前必做）
+
+> **Why**: 「什么能挂什么」「什么用 parent_id、什么用 phase_id」**因环境而异**，假设必翻车。建项目后、批量建工作项前，用 1 个阶段 + 各类型单条试探，记录真实规则再批量。睿恩 `需求✗task`，daocloud-test `需求✓task`——同一句话两个环境相反。
+
+**必测矩阵**（创建测试项→读结果→删除）：
+
+| 探测 | 典型结果(因环境而异) | 用途 |
+|------|------|------|
+| 需求 `parent_id`=阶段 | 多为 ✗ `100319` → 用 `phase_id` 关联阶段 | 顶层需求怎么归阶段 |
+| 子需求 `parent_id`=需求 | 多为 ✓（需求多级靠它） | 需求逐级分解 |
+| **任务 `parent_id`=需求** | **环境差异大**（睿恩✗/daocloud✓），必测 | 实现任务能否挂需求叶子 |
+| 里程碑 `parent_id`=阶段 | 多为 ✓ → **里程碑用 parent_id 挂阶段，不用 phase_id**（phase_id 对里程碑无效，会悬空） | 里程碑归阶段 |
+| 缺陷 `parent_id`=需求/子需求 | 因环境而异，必测 | 缺陷挂哪 |
+| 测试用例(work-item型) 能否创建 | 常 ✗ `1003104 项目中不存在该工作项类型` → **测试管理走 TestHub** | 别用 work-item 型测试用例 |
+
+**铁律**：
+- 探测目标要选准（按 title 子串找易误中**阶段**——阶段名常含"详细设计"等词）；探测项创建后**立即删除**。
+- 把矩阵结果存成本轮规则，build 按规则走，不照搬上一环境。
+
 ### 3.9 Pre-flight 探测脚本模板（直接复制使用）
 
 **用法**：`node pre-flight.js --client_id={表单 client_id} --client_secret={表单 client_secret}`
@@ -692,9 +711,14 @@ const patchList = childItems.map(item => ({
 await api.batchUpdateWorkItems(token, patchList, baseUrl);
 ```
 
-- `batchUpdateWorkItems` 封装了 `PATCH /v1/project/work_items`，支持传数组批量更新
-- 一个项目下所有子工作项的 phase_id 修复，**一次请求搞定**，不再逐条 PATCH
-- **触发条件**：所有通过 `parent_id` 创建的工作项（Feature→Story→Task/Bug, Epic→Feature）。顶层 Epic 和直接挂阶段的需求不受影响。
+- `batchUpdateWorkItems` 封装了 `PATCH /v1/project/work_items`，支持传数组批量更新（**注意：某些环境 batch PATCH 报 `100008 property_name`，须降级逐条 `updateWorkItem` 或用 `batchCreateParallel` 并发逐条**）
+- 一个项目下所有子工作项的 phase_id 修复，并发一把搞定
+
+**强化规则（2026-06-25 daocloud-test 实测）**：
+- **phase_id 必须全量显式 PATCH**：子项创建时父若尚无 phase（顶层后补），子项就**完全悬空**（不在任何阶段）。所以 build 末尾对**每个需求/任务/自定义**按其目标阶段全量 PATCH `phase_id`，不只顶层。验证口径：**「无阶段的工作项数」必须为 0**。
+- **里程碑用 `parent_id`=阶段，不要 phase_id**（phase_id 对里程碑无效→悬空）；且**不要把里程碑混进 phase_id 批次**（会拖累整批失败）。
+- **跨阶段父子允许**：子可在比父更晚的阶段（客户需求 G1 → 系统需求 G2 → 软件需求 G4 一条链横跨多阶段，正是 V 模型）。PATCH 子项 phase_id 到不同于父的阶段会生效。
+- **全阶段必铺满**：垂直行业(如 ASPICE)的每个阶段门都要有内容，**G1 概念立项、G7 系统验证/量产不能空**。左侧需求分解(客户→系统→架构→软件→设计→实现)，右侧验证(软件验证 SWE.4/5/6、系统验证 SYS.4/5、量产)。建后按阶段计数自检，每阶段 >0。
 
 ## Phase 5: QA Review（自动质检与修复）
 
