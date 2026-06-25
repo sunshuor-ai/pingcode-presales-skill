@@ -172,6 +172,18 @@ open ~/.claude/skills/pingcode-presales/templates/form.html
 
 **命名强制规则**：Phase 3/4 中所有工作项 title、Wiki 空间名、测试库名，必须包含词典中至少一个词。禁止出现"示例/通用/测试"等与词典无关的自造业务词。
 
+### 行业模板选取（塑造蓝图的行业大脑）
+
+调研后、进入 Phase 3 前，按客户「行业」选/生成行业结构模板（详见 `references/verticals/_README.md`）：
+
+1. **匹配**：读 `references/verticals/` 下各文件名 + 首行 `synopsis` 注释，就近匹配客户行业。
+2. **三分支**：
+   - **命中 curated**：加载该 `<行业>.md`，其「项目类型 / 阶段门 / 测试维度 / 术语」直接驱动 Phase 3 蓝图，`types` 块进 Phase 3.7。
+   - **未命中（长尾）**：现场 WebSearch 该行业研发流程/标准/术语，生成**同形态**结构包（散文 + `types` YAML）用于本次搭建；交付时（Phase 6）询问是否沉淀。
+   - **都不沾边 / 调研薄**：降级走通用 WBS（现状），并在蓝图标注"本行业未沉淀模板，结构按通用搭，建议补"。
+3. **专属类型优先补 PingCode 短板**：缺口处（如 ASPICE SUP.10 变更请求）正是最该建的自定义类型——既补功能、又是演示讲合规的抓手。
+4. 行业结构随整份蓝图在 Phase 3.6 一并确认，不新增确认关。
+
 ### 信息充分度判断（必须执行，再进入 Phase 3）
 
 调研完成后，对照以下问题自评：
@@ -839,6 +851,11 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 
 生成 `{公司名}_delivery.md`：项目全景 + 层级树 + Wiki 目录 + 测试覆盖 + 演示路径
 
+**行业模板沉淀（仅当本次为长尾现场生成）**：若本次行业未命中 curated 模板而是现场生成的，交付后询问用户：
+> "『{行业}』这次是现场生成的，要不要沉淀成正式模板？"
+
+用户认可 → 写 `references/verticals/{行业}.md`（用户过目/微调）→ `node scripts/vertical_template.js` 校验通过 → 提交。下次同行业即升级为 curated 命中。
+
 ---
 
 ## 参考资源
@@ -852,6 +869,8 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | `scripts/pingcode_web.js` | Web 操作封装库（Puppeteer+Edge，登录+截图+配置） |
 | `scripts/pingcode_historical.js` | 历史数据模拟引擎（比例分配+收敛曲线+Sprint历史） |
 | `scripts/pingcode_workload.js` | 工时随机登记（登记人=assignee，日期对齐北京当日，report_by_id 必填） |
+| `scripts/vertical_template.js` | 行业模板 YAML 校验器（kind/group/options，CLI 无参校验全部） |
+| `references/verticals/` | 行业结构模板（散文+types 块；含 _README 格式说明、汽车电子/医疗器械 打样） |
 | `scripts/pingcode_tags.js` | 标签生成器（行业术语词典+类型分配） |
 | `templates/` | client_profile / blueprint / delivery_summary / form.html 模板 |
 | `templates/form.html` | 客户信息收集表单 |
