@@ -316,12 +316,16 @@
           <span class="num">2</span>
           <div class="nav-step-content"><strong>搭建策略</strong><span>研发模式与模块偏好</span></div>
         </a>
-        <a class="nav-step" href="#sec-context" data-step="3">
+        <a class="nav-step" href="#sec-advanced" data-step="3">
           <span class="num">3</span>
+          <div class="nav-step-content"><strong>高级配置</strong><span>工时、类型与深度偏好</span></div>
+        </a>
+        <a class="nav-step" href="#sec-context" data-step="4">
+          <span class="num">4</span>
           <div class="nav-step-content"><strong>上下文增强</strong><span>会议纪要与凭证信息</span></div>
         </a>
-        <a class="nav-step" href="#outputSection" data-step="4">
-          <span class="num">4</span>
+        <a class="nav-step" href="#outputSection" data-step="5">
+          <span class="num">5</span>
           <div class="nav-step-content"><strong>触发词交付</strong><span>生成或提交队列</span></div>
         </a>
       </div>
@@ -411,6 +415,62 @@
         </div>
       </section>
 
+      <section class="section-card" id="sec-advanced">
+        <div class="section-head" onclick="toggleSection(this)">
+          <span class="section-icon">03</span>
+          <div class="section-title"><strong>高级配置</strong><span>工时、类型、字段、标签等细粒度开关</span></div>
+          <span class="tag">推荐</span>
+          <span class="spacer"></span>
+          <span class="chev">▼</span>
+        </div>
+        <div class="section-body">
+          <!-- 功能开关 -->
+          <div class="field" style="margin-bottom: 20px;">
+            <label class="field-label">功能开关</label>
+            <div class="hint">勾选需要在演示环境中体现的高级特性。默认全开，可按需关闭。</div>
+            <div class="chips">
+              <span class="chip"><input type="checkbox" id="adv1" value="工时登记" checked><label for="adv1">工时登记</label></span>
+              <span class="chip"><input type="checkbox" id="adv2" value="历史数据模拟" checked><label for="adv2">历史数据模拟</label></span>
+              <span class="chip"><input type="checkbox" id="adv3" value="自定义字段" checked><label for="adv3">自定义字段</label></span>
+              <span class="chip"><input type="checkbox" id="adv4" value="自动标签" checked><label for="adv4">自动标签</label></span>
+              <span class="chip"><input type="checkbox" id="adv5" value="交付物" checked><label for="adv5">交付物</label></span>
+            </div>
+          </div>
+
+          <!-- 自定义工作项类型（含子层级） -->
+          <div class="field" style="margin-bottom: 20px;">
+            <label class="field-label">自定义工作项类型</label>
+            <div class="hint">为演示环境创建行业专属工作项类型。勾选父项后展开子层级。</div>
+            <div class="chips" style="margin-bottom: 10px;">
+              <span class="chip"><input type="checkbox" id="custType" value="自定义工作项类型" checked onchange="toggleCustTypeSub()"><label for="custType">启用自定义工作项类型</label></span>
+            </div>
+            <div id="custTypeSub" style="margin-left: 12px; padding: 12px; border-left: 2px solid var(--border-base); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--bg-body);">
+              <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 10px;">
+                默认帮客户创建行业专属的工作项卡片类型，演示时更接地气。
+              </div>
+              <div class="chips" style="margin-bottom: 8px;">
+                <span class="chip"><input type="checkbox" id="tier1" value="Tier1:工程变更申请+技术评审" checked><label for="tier1">标配 · 工程变更 + 技术评审</label></span>
+                <span class="chip"><input type="checkbox" id="tier2" value="Tier2:风险项+合规检查项" checked><label for="tier2">硬件包 · 风险项 + 合规检查</label></span>
+                <span class="chip"><input type="checkbox" id="tier3" value="Tier3:技术债务+研究任务"><label for="tier3">敏捷包 · 技术债务 + 研究任务</label></span>
+              </div>
+              <div style="color: var(--text-placeholder); font-size: 11px; margin-top: 4px;">
+                标配所有客户都建；硬件包适合汽车/半导体/制造等行业；敏捷包适合纯软件/AI 团队
+              </div>
+            </div>
+          </div>
+
+          <!-- 演示深度 -->
+          <div class="field">
+            <label class="field-label">演示深度</label>
+            <div class="hint">广度优先建多个轻量项目，深度优先集中建少量项目的完整层级。</div>
+            <div class="chips">
+              <span class="chip"><input type="radio" name="depth" id="depthBroad" value="广度优先" checked><label for="depthBroad">广度优先（多项目）</label></span>
+              <span class="chip"><input type="radio" name="depth" id="depthDeep" value="深度优先"><label for="depthDeep">深度优先（少项目多层级）</label></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section-card" id="sec-context">
         <div class="section-head" onclick="toggleSection(this)">
           <span class="section-icon">03</span>
@@ -479,8 +539,12 @@
             <span class="summary-dot">3</span>
             <div class="summary-item-text"><strong>业务模块选择</strong><span id="sumModuleText">默认项目管理与测试管理</span></div>
           </div>
-          <div class="summary-item" id="sumContext">
+          <div class="summary-item" id="sumAdvanced">
             <span class="summary-dot">4</span>
+            <div class="summary-item-text"><strong>高级配置</strong><span id="sumAdvancedText">工时、类型、深度等偏好</span></div>
+          </div>
+          <div class="summary-item" id="sumContext">
+            <span class="summary-dot">5</span>
             <div class="summary-item-text"><strong>附加业务上下文</strong><span id="sumContextText">纪要可大幅提升配置精准度</span></div>
           </div>
         </div>
@@ -507,6 +571,20 @@ function methodologyVals() { return vals('#mth1,#mth2,#mth3,#mth4'); }
 function moduleVals() { return vals('#m1,#m2,#m3,#m4,#m5'); }
 function getProducts() { return $id('products').value.split('\n').map(l => l.trim()).filter(Boolean); }
 
+function toggleCustTypeSub() {
+  const parent = $id('custType');
+  const sub = $id('custTypeSub');
+  sub.style.display = parent.checked ? 'block' : 'none';
+  // 父项取消时联动取消所有子项，父项勾选时恢复默认勾选
+  if (!parent.checked) {
+    ['tier1','tier2','tier3'].forEach(id => $id(id).checked = false);
+  } else {
+    $id('tier1').checked = true;
+    $id('tier2').checked = true;
+  }
+  updateCompletion();
+}
+
 function buildPrompt(allowDraft) {
   const c = $id('company').value.trim();
   const i = $id('industry').value.trim();
@@ -522,6 +600,26 @@ function buildPrompt(allowDraft) {
   const mths = methodologyVals(); if (mths.length) lines.push('研发模式: ' + mths.join('/'));
   const mods = moduleVals(); if (mods.length) lines.push('搭建模块: ' + mods.join('、'));
   const req = $id('requirements').value.trim(); if (req) lines.push('特殊要求: ' + req);
+
+  // 高级配置
+  const advSwitches = vals('#adv1,#adv2,#adv3,#adv4,#adv5');
+  const advAll = ['工时登记','历史数据模拟','自定义字段','自动标签','交付物'];
+  const advOn = advAll.filter(a => advSwitches.includes(a));
+  const advOff = advAll.filter(a => !advSwitches.includes(a));
+  if (advOn.length) lines.push('启用: ' + advOn.join('、'));
+  if (advOff.length) lines.push('禁用: ' + advOff.join('、'));
+
+  if ($id('custType').checked) {
+    const tiers = vals('#tier1,#tier2,#tier3');
+    if (tiers.length) lines.push('自定义工作项类型: ' + tiers.join(', '));
+    else lines.push('自定义工作项类型: 无（待AI判断）');
+  } else {
+    lines.push('自定义工作项类型: 否');
+  }
+
+  const depth = document.querySelector('input[name="depth"]:checked');
+  if (depth) lines.push('演示深度: ' + depth.value);
+
   const pu = $id('pingcodeUrl').value.trim(); if (pu) lines.push('环境地址: ' + pu);
   const cid = $id('clientId').value.trim(), cs = $id('clientSecret').value.trim();
   if (cid && cs) { lines.push('client_id=' + cid, 'client_secret=' + cs); }
@@ -563,24 +661,32 @@ function updateCompletion() {
   const products = getProducts();
   const mods = moduleVals();
   const hasContext = !!($id('transcript').value.trim() || $id('pingcodeUrl').value.trim() || $id('clientId').value.trim());
+  const advSwitches = vals('#adv1,#adv2,#adv3,#adv4,#adv5');
+  const custTypeOn = $id('custType').checked;
+  const tiers = vals('#tier1,#tier2,#tier3');
+  const hasDepth = !!document.querySelector('input[name="depth"]:checked');
   let points = 0;
-  if (c) points += 16;
-  if (i) points += 16;
-  if (ts) points += 14;
-  if (products.length) points += 22;
-  if (methodologyVals().length) points += 12;
-  if (mods.length) points += 12;
-  if (hasContext) points += 8;
+  if (c) points += 14;
+  if (i) points += 14;
+  if (ts) points += 10;
+  if (products.length) points += 18;
+  if (methodologyVals().length) points += 10;
+  if (mods.length) points += 8;
+  if (advSwitches.length >= 3) points += 4;
+  if (custTypeOn && tiers.length) points += 5;
+  if (hasDepth) points += 3;
+  if (hasContext) points += 14;
   const score = Math.min(points, 100);
-  
+
   ['scoreText','heroScore'].forEach(id => $id(id).textContent = score + '%');
   $id('progressBar').style.width = score + '%';
-  
+
   toggleDone('sumBasic', c && i && ts, c && i && ts ? `已录入：${c} / ${i}` : '等待填写公司、行业、规模');
   toggleDone('sumProduct', products.length, products.length ? `已规划 ${products.length} 条业务线` : '至少填写 1 条核心产品线');
   toggleDone('sumModule', mods.length, mods.length ? mods.join(', ') : '默认项目管理与测试管理');
+  toggleDone('sumAdvanced', custTypeOn || advSwitches.length !== 5, custTypeOn ? `类型: ${tiers.length ? tiers.length + ' 组已选' : '待选层级'}` : (advSwitches.length !== 5 ? `${advSwitches.length}/5 开关已启用` : '已配置高级选项'));
   toggleDone('sumContext', hasContext, hasContext ? '业务上下文已就绪' : '纪要可大幅提升配置精准度');
-  
+
   updatePreview();
 }
 
@@ -616,7 +722,7 @@ function generate() {
   $id('output').textContent = prompt;
   $id('outputSection').classList.add('on');
   $id('btnCopy').style.display = 'inline-flex';
-  setStep(4);
+  setStep(5);
   updateCompletion();
   $id('outputSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -637,6 +743,7 @@ function resetForm() {
   document.querySelectorAll('input:not([type=checkbox]), textarea').forEach(e => e.value = '');
   $id('teamSize').value = '';
   clearValidation(); closeOutput(); setStep(1); updateCompletion(); show('配置已清空', 'ok');
+  $id('custTypeSub').style.display = 'block';
 }
 
 async function autoRun() {
@@ -648,7 +755,7 @@ async function autoRun() {
   try {
     await submitToServer();
     show('队列推送成功，执行引擎已接管', 'ok');
-    setStep(4);
+    setStep(5);
   } catch(e) {
     show('接口连接超时，请检查服务状态', 'err');
   } finally {
@@ -668,6 +775,12 @@ async function submitToServer() {
     company: c, industry: i, products: p.split('\n').map(l => l.trim()).filter(Boolean),
     teamSize: $id('teamSize').value, methodology: methodologyVals().join('/'),
     requirements: $id('requirements').value.trim(), modules: moduleVals(),
+    advanced: {
+      switches: vals('#adv1,#adv2,#adv3,#adv4,#adv5'),
+      custTypeEnabled: $id('custType').checked,
+      custTypeTiers: vals('#tier1,#tier2,#tier3'),
+      depth: (document.querySelector('input[name="depth"]:checked') || {}).value || '广度优先'
+    },
     pingcodeUrl: $id('pingcodeUrl').value.trim(), clientId: $id('clientId').value.trim(),
     clientSecret: $id('clientSecret').value.trim(), transcript: $id('transcript').value.trim(),
   };
