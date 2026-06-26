@@ -123,6 +123,21 @@ open ~/.claude/skills/pingcode-presales/templates/form.html
 
 ---
 
+## 快速入口：修订模式（贴合回路）
+
+触发词 `来活了，改环境`：对**已搭好**的环境，用新文档/会谈反应做增量贴合（POC=探针，搭完不是终点）。详见 `references/fit_loop.md`。
+
+```
+来活了，改环境
+环境标识: {identifier}
+context: {客户}_context.json
+输入: --from-doc={客户需求.xlsx} 或 --from-followup={会谈纪要.md}
+```
+
+流程：适配器产补丁 → 合并入 context store(低不盖高) → 差分渲染 → **dry-run 预览(增/改/删 + 待裁定)** → 确认落地 + 回写 store/manifest。
+
+---
+
 ## Phase 1: Discover（客户画像）
 
 > **进度横幅**：
@@ -903,6 +918,11 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | `scripts/pingcode_tags.js` | 标签词典（行业术语，导出 INDUSTRY_TERMS/INDUSTRY_DEFAULT） |
 | `scripts/pingcode_tag_logic.js` | 标签纯逻辑（词典锚定抽词 extractTags + 关键词匹配 matchTags，可单测） |
 | `scripts/pingcode_tag_apply.js` | 标签自动打标 CLI（扫已建项目→抽~12标签→并发贴, 幂等+dry+报告） |
+| `scripts/pingcode_fit_store.js` | 贴合回路 context store（合并优先级 meeting>doc>skeleton，低不盖高） |
+| `scripts/pingcode_fit_render.js` | 差分渲染器（context+manifest→增/改/删，值漂移触发改，幂等） |
+| `scripts/pingcode_fit_skin.js` / `pingcode_fit_reaction.js` | 贴皮/反应适配器（产补丁，未命中挂起 pending_review） |
+| `scripts/pingcode_revise.js` | 修订 CLI（dry-run 预览 + 只删已知 + 回写）；触发"来活了，改环境" |
+| `references/fit_loop.md` | 贴合回路操作手册 |
 | `templates/` | client_profile / blueprint / delivery_summary / form.html 模板 |
 | `templates/form.html` | 客户信息收集表单 |
 
