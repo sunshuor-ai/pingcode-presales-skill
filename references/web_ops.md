@@ -51,7 +51,7 @@
 const { newPage, login, goTo, screenshot, close } = require('./pingcode_web.js');
 
 const page = await newPage();
-await login(page, 'daocloud-test.pingcode.com', 'manager3477', 'pc12345');
+await login(page, '<租户>.pingcode.com', '<用户名占位符>', '<密码占位符>'); // 凭证走 env/表单,绝不入库
 await goTo(page, 'daocloud-test.pingcode.com', 'pjm/projects');
 await screenshot(page, 'projects.png');
 await close();
