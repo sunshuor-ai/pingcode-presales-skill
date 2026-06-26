@@ -22,17 +22,18 @@ async function rc(page, locator, label) {
   await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); return true;
 }
 async function clickRowAction(page, rowName, actionText) {
-  const c = await page.evaluate(({ rowName, actionText }) => {
+  // 直接 evaluate el.click() 该行「配置」——不靠坐标/不滚屏,行在第几屏都行
+  const ok = await page.evaluate(({ rowName, actionText }) => {
     const names = [...document.querySelectorAll('span,a,div,td,li')].filter(e => e.textContent.trim() === rowName);
     for (const ne of names) {
       const row = ne.closest('tr, .thy-sortable-item, [class*="row"], li'); if (!row) continue;
       const act = [...row.querySelectorAll('a,span,button')].find(x => x.textContent.trim() === actionText);
-      if (act) { const r = act.getBoundingClientRect(); if (r.width) return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }
+      if (act) { act.click(); return true; }
     }
-    return null;
+    return false;
   }, { rowName, actionText });
-  if (!c) { console.log(`  [miss] 行「${rowName}」→「${actionText}」`); return false; }
-  await page.mouse.click(c.x, c.y); return true;
+  if (!ok) console.log(`  [miss] 行「${rowName}」→「${actionText}」`);
+  return ok;
 }
 
 (async () => {
