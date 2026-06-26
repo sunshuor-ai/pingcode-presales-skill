@@ -142,6 +142,12 @@ async function listWorkItems(token, projectId, baseUrl = DEFAULT_BASE) {
   return all;
 }
 
+async function deleteWorkItem(token, workItemId, baseUrl = DEFAULT_BASE) {
+  const resp = await fetch(`${baseUrl}/v1/project/work_items/${workItemId}`, { method: "DELETE", headers: H(token) });
+  if (!resp.ok) throw new Error(`删除工作项失败: ${await resp.text()}`);
+  return resp.status;
+}
+
 // ============================================================
 // Wiki 知识库
 // ============================================================
@@ -764,7 +770,7 @@ module.exports = {
   // Sprint
   createSprint, listSprints, updateSprint,
   // 工作项
-  createWorkItem, updateWorkItem, listWorkItems,
+  createWorkItem, updateWorkItem, deleteWorkItem, listWorkItems,
   batchUpdateWorkItems, getWorkItemTypes, listWorkItemVersions,
   // Wiki
   createWikiSpace, listWikiSpaces, listWikiPages,
