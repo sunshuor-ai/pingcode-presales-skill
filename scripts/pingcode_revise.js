@@ -27,8 +27,8 @@ async function applyPlan(token, plan, baseUrl, manifest, facts) {
   for (const f of plan.create) {
     if (f.kind !== 'work_item') { console.warn(`跳过(MVP仅work_item): ${f.value}`); done.skip++; continue; }
     const parentId = pathToObj[parentPathOf(f.path)];
-    const wi = await api.createWorkItem(token, { project_id: process.env.FIT_PROJECT_ID,
-      type_id: 'task', title: f.value, parent_id: parentId, description: f.value }, baseUrl);
+    const wi = await api.createWorkItem(token, { projectId: process.env.FIT_PROJECT_ID,
+      typeId: 'task', title: f.value, parentId, description: f.value }, baseUrl);
     manifest[f.id] = { id: wi.id, value: f.value, path: f.path };
     pathToObj[f.path] = wi.id; done.create++;
   }
