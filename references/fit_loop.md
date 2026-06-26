@@ -15,8 +15,15 @@ POC 是探针不是交付物：搭完后，用客户文档(贴皮)/会谈反应(
 **铁律都从这链子推出来**：自述是噪声 → 判不准就 `pending_review` 挂起、绝不瞎贴；context 有成色（接地证 > 先验猜）→ `meeting>doc>skeleton`、低不盖高（客户亲口纠正过的，重跑骨架不许打回）；环境是探针、改动要可控 → 先 `--dry` 看预览、只删自己建过的。理解了"为什么"，遇到 spec 没覆盖的情形也能照同一判断走。
 
 ## 数据
-- `{客户}_context.json`：客户模型唯一真相源（fact 带 source/status/authority），MVP 手写或由首建种子。
+- `{客户}_context.json`：客户模型唯一真相源（fact 带 source/status/authority）。
 - `{客户}_build_manifest.json`：`{ <factId>: { id, value, path } }`，增量基准。
+
+**底账从哪来（首次用修订模式前）**：对**已搭好**的环境，用导出器一键生成上面两个文件，不必手攒——
+```
+node pingcode_fit_export.js --client_id=$PINGCODE_CLIENT_ID --client_secret=$PINGCODE_CLIENT_SECRET \
+  --identifier=JLALED [--client=客户名] [--out=输出前缀]
+```
+导出的 fact 默认 `source=skeleton/status=guess`（最低权威，后续 doc/meeting 补丁可覆盖），且 `value` 与 manifest 一致 → **导出后立即跑 `--dry` 必为 `增0/改0/删0`**（导出≠凭空重建，已建的不会被当新建）。`factId` 由 work item id 稳定派生，复跑同结果。
 
 ## 触发：`来活了，改环境`
 带 `--from-doc` 或 `--from-followup` 与环境标识。

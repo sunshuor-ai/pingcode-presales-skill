@@ -920,6 +920,7 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | `scripts/pingcode_tag_apply.js` | 标签自动打标 CLI（扫已建项目→抽~12标签→并发贴, 幂等+dry+报告） |
 | `scripts/pingcode_fit_store.js` | 贴合回路 context store（合并优先级 meeting>doc>skeleton，低不盖高） |
 | `scripts/pingcode_fit_render.js` | 差分渲染器（context+manifest→增/改/删，值漂移触发改，幂等） |
+| `scripts/pingcode_fit_export.js` | 底账导出器（已建环境→context+manifest，修订模式首次用前一键生成，导出即幂等） |
 | `scripts/pingcode_fit_skin.js` / `pingcode_fit_reaction.js` | 贴皮/反应适配器（产补丁，未命中挂起 pending_review） |
 | `scripts/pingcode_revise.js` | 修订 CLI（dry-run 预览 + 只删已知 + 回写）；触发"来活了，改环境" |
 | `references/fit_loop.md` | 贴合回路操作手册 |
