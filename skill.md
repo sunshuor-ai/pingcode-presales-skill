@@ -24,7 +24,7 @@ disable-model-invocation: false
 ╭─────────────────────────────── 售前演示环境搭建 v3.6 ───────────────────────────────╮
 │  🎯 流程   画像 → 调研 → 设计 → 搭建 → 质检 → 交付                                  │
 │  📦 模块   项目管理 · 产品管理 · Wiki · 测试管理 · Ship                              │
-│  🔧 通道   API 批量创建 + Web 独占操作（Puppeteer）                                  │
+│  🔧 通道   API 批量创建 + Web 独占操作（Playwright 本地）                            │
 │  📋 触发   来活了，搭模板 [附表单] / 无表单→自动打开填写                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -923,7 +923,8 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | `references/demo_guide.md` | 演示路径、客户应答、培训话术 |
 | `references/web_ops.md` | Web 独占操作（自定义字段/工作流/仪表盘/自动化/权限） |
 | `scripts/pingcode_api.js` | API 封装库（40+ 端点，含随机用户派发） |
-| `scripts/pingcode_web.js` | Web 操作封装库（Puppeteer+Edge，登录+截图+配置） |
+| `scripts/ui/fields.js` | **Web 自动化生产模块**（纯本地 Playwright+Edge）：建类型/入流程/建字段/挂载全流程编排 |
+| `scripts/ui/`(build_type / add_type_to_flow / build_attr / attach_attr / batch_type_fields / probe_*) | 四段流水的可单跑脚本 + 探针;ngx-tethys 铁律见 `references/web_ops.md` |
 | `scripts/pingcode_historical.js` | 历史数据模拟引擎（比例分配+收敛曲线+Sprint历史） |
 | `scripts/pingcode_workload.js` | 工时随机登记（登记人=assignee，日期对齐北京当日，report_by_id 必填） |
 | `scripts/vertical_template.js` | 行业模板 YAML 校验器（kind/group/options，CLI 无参校验全部） |
@@ -950,7 +951,9 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | 自动化规则(FIow) | ✗ | ✓ 独占 |
 | 权限细粒度配置 | ✗ | ✓ 独占 |
 | 页面截图（交付用） | ✗ | ✓ |
-| Web 登录: `pingcode_web.login(page, env, user, pass)` |
+| **自定义工作项类型 + 字段 + 挂载** | ✗ | ✓ 独占（`scripts/ui/`，详见 3.7） |
+
+> **Web 通道 = 纯本地 Playwright**（`channel:'msedge'` + 持久化 profile `~/.pingcode-presales-edge-profile` 复用登录态,首次手工登一次,不上云）。入口 `scripts/ui/fields.js`;全部 ngx-tethys 铁律见 `references/web_ops.md`。已弃用旧 `pingcode_web.js`(puppeteer 启发式,与真实 DOM 不对版)。
 
 ## 案例
 
