@@ -429,7 +429,24 @@ async function main() {
   process.exit(fails > 0 ? 1 : 0);
 }
 
-main().catch(e => {
-  console.error('\n自检脚本报错:', e.message);
-  process.exit(2);
-});
+function checkCustomFieldFill(items, customTypeIds, customKeys) {
+  let total = 0, filled = 0;
+  for (const it of items || []) {
+    if (!customTypeIds.has(it.type_id)) continue;
+    total++;
+    const props = it.properties || {};
+    const hasVal = Object.keys(props).some(k => customKeys.has(k)
+      && props[k] != null && !(Array.isArray(props[k]) && props[k].length === 0));
+    if (hasVal) filled++;
+  }
+  return { total, filled, rate: total ? filled / total : 1 };
+}
+
+module.exports = { checkCustomFieldFill };
+
+if (require.main === module) {
+  main().catch(e => {
+    console.error('\n自检脚本报错:', e.message);
+    process.exit(2);
+  });
+}
