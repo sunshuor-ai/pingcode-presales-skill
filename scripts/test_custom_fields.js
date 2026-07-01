@@ -66,3 +66,17 @@ test('buildPropertiesPatch: 非法选项产出回落值+warn但仍写入', () =>
   assert.strictEqual(props.biangengleixing, 'opt_a');
   assert.match(warnings[0], /fell back/);
 });
+
+test('applyPropertyValues: 注入 updateFn，空 props 跳过、有 props 调用一次', async () => {
+  const calls = [];
+  const updateFn = async (token, id, fields) => { calls.push({ id, fields }); return { id }; };
+  const items = [
+    { id:'w1', props:{ biangengleixing:'opt_a' } },
+    { id:'w2', props:{} },
+  ];
+  const res = await CF.applyPropertyValues('tok', items, 'https://b', { updateFn });
+  assert.strictEqual(calls.length, 1);
+  assert.deepStrictEqual(calls[0], { id:'w1', fields:{ properties:{ biangengleixing:'opt_a' } } });
+  assert.strictEqual(res.find(r=>r.id==='w1').ok, true);
+  assert.strictEqual(res.find(r=>r.id==='w2').skipped, true);
+});

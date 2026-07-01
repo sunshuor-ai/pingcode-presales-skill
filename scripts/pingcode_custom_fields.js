@@ -69,4 +69,36 @@ function buildPropertiesPatch(typeFields, emittedProps, ctx = {}) {
   return { props, warnings };
 }
 
-module.exports = { resolveOptionId, formatValue, discoverTypeFields, buildPropertiesPatch };
+async function resolvePropertyCatalog(token, baseUrl, fetchImpl = fetch) {
+  const map = new Map();
+  let page = 0;
+  while (true) {
+    const r = await fetchImpl(`${baseUrl}/v1/project/work_item_properties?page_index=${page}&page_size=100`,
+      { headers: { Authorization: `Bearer ${token}` } });
+    const j = await r.json();
+    const vals = j.values || [];
+    for (const p of vals) map.set(p.id, { name: p.name, type: p.type, options: p.options || [] });
+    if (vals.length === 0 || map.size >= (j.total || 0)) break;
+    page++;
+  }
+  return map;
+}
+
+async function applyPropertyValues(token, items, baseUrl, opts = {}) {
+  const concurrency = opts.concurrency || 10;
+  const updateFn = opts.updateFn || require('./pingcode_api.js').updateWorkItem;
+  const results = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const r = await Promise.all(batch.map(async it => {
+      if (!it.props || Object.keys(it.props).length === 0) return { id: it.id, skipped: true };
+      try { await updateFn(token, it.id, { properties: it.props }, baseUrl); return { id: it.id, ok: true }; }
+      catch (e) { return { id: it.id, error: e.message }; }
+    }));
+    results.push(...r);
+  }
+  return results;
+}
+
+module.exports = { resolveOptionId, formatValue, discoverTypeFields, buildPropertiesPatch,
+  resolvePropertyCatalog, applyPropertyValues };
