@@ -17,6 +17,11 @@ function moduleMembersEndpoint(module, id) {
   if (!f) throw new Error(`unknown module: ${module}`);
   return f(id);
 }
+function memberAddBody(module, userId, roleId) {
+  // 实测契约（2026-07-01）：project/testhub 用 user_id；wiki/ship 用 member:{id,type:'user'}
+  if (module === 'wiki' || module === 'ship') return { member: { id: userId, type: 'user' }, role_id: roleId };
+  return { user_id: userId, role_id: roleId };
+}
 function containerModuleOf(manifestType) {
   return CONTAINER_TYPE_MODULE[manifestType] || null;
 }
@@ -49,7 +54,7 @@ async function addMember(token, module, containerId, userId, roleId, baseUrl, fe
   const r = await fetchImpl(baseUrl + moduleMembersEndpoint(module, containerId), {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id: userId, role_id: roleId }),
+    body: JSON.stringify(memberAddBody(module, userId, roleId)),
   });
   if (r.status === 200 || r.status === 201) return { ok: true };
   const t = await r.text();
@@ -98,6 +103,6 @@ async function sweepAdmins(token, manifest, baseUrl, opts = {}, deps = {}) {
   return { added: results.filter(r => r.ok).length, skipped_no_admin: false, results };
 }
 
-module.exports = { ADMIN_ROLE_FALLBACK, moduleMembersEndpoint, containerModuleOf,
+module.exports = { ADMIN_ROLE_FALLBACK, moduleMembersEndpoint, memberAddBody, containerModuleOf,
   pickAdminRoleId, tallyAdminUserId,
   listMembers, addMember, resolveAdminRoleId, resolveAdminUserId, sweepAdmins };

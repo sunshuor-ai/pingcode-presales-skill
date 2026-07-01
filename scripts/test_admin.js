@@ -79,3 +79,19 @@ test('addProjectMember: 带 roleId 时进入请求体', async () => {
     assert.deepStrictEqual(sent, { user_id:'u1', role_id:'100000000000000000000001' });
   } finally { global.fetch = origFetch; }
 });
+
+test('memberAddBody: project/testhub 用 user_id，wiki/ship 用 member 对象（实测契约）', () => {
+  assert.deepStrictEqual(A.memberAddBody('project','u1','r'), { user_id:'u1', role_id:'r' });
+  assert.deepStrictEqual(A.memberAddBody('testhub','u1','r'), { user_id:'u1', role_id:'r' });
+  assert.deepStrictEqual(A.memberAddBody('wiki','u1','r'), { member:{ id:'u1', type:'user' }, role_id:'r' });
+  assert.deepStrictEqual(A.memberAddBody('ship','u1','r'), { member:{ id:'u1', type:'user' }, role_id:'r' });
+});
+
+test('addMember: 按模块发对应 body 形状', async () => {
+  const sent = {};
+  const fake = async (url, opts) => { sent[url] = JSON.parse(opts.body); return { status:200, text: async()=>'{}' }; };
+  await A.addMember('t','wiki','s1','u1','r','https://b', fake);
+  await A.addMember('t','project','p1','u1','r','https://b', fake);
+  assert.deepStrictEqual(sent['https://b/v1/wiki/spaces/s1/members'], { member:{ id:'u1', type:'user' }, role_id:'r' });
+  assert.deepStrictEqual(sent['https://b/v1/project/projects/p1/members'], { user_id:'u1', role_id:'r' });
+});

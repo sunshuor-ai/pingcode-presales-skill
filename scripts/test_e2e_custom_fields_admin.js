@@ -16,7 +16,14 @@ async function api(t,m,path,body){ const r=await fetch(BASE+path,{method:m,heade
 // 已知自定义类型（daocloud-test，2026-06-30 探测）
 const TYPE_CHANGE = '6a282ab4eb034ddabe075b2b';   // 工程变更申请
 const HYBRID = ['683e7d06ae83a8082f4fc891','68881e8a993e6ee6fa88bcef'];
-const TEST_PROJ = '691adde7b2447dbb688d1349';     // 测试瀑布
+const CONTAINERS = {
+  project: '691adde7b2447dbb688d1349',            // 测试瀑布
+  wiki:    '6a27eb10d9a9e9625bd21ed3',            // 工程运维手册
+  ship:    '67a3657a42012b855324f9be',            // 业务需求池
+  testhub: '67a3657a2bbc7b058ab988ec',            // 示例测试库
+};
+const CAND_USERS = ['6abd4476dbd14d409235615ee5977821','9ea3529874a448dbaf5c54813f394bd6',
+  '60be5fbd4d2d4e129fc75da704a2d789','ee51126b044449f390d5c58cad305df8'];
 
 test('E2E #1: 建自定义类型工作项→填值→readback 校验→删', { skip: !RUN }, async () => {
   const t = await token();
@@ -45,22 +52,23 @@ test('E2E #1: 建自定义类型工作项→填值→readback 校验→删', { s
   }
 });
 
-test('E2E #2: 加管理员→readback role 校验→还原', { skip: !RUN }, async () => {
+test('E2E #2: 四模块加管理员→readback role 校验→还原', { skip: !RUN }, async () => {
   const t = await token();
-  const roleId = await A.resolveAdminRoleId(t, BASE, [TEST_PROJ]);
+  const roleId = await A.resolveAdminRoleId(t, BASE, [CONTAINERS.project]);
   assert.strictEqual(roleId, A.ADMIN_ROLE_FALLBACK, '管理员 role 应为统一常量');
-  const members = await A.listMembers(t, 'project', TEST_PROJ, BASE);
-  const existing = new Set(members.map(m => m.user && m.user.id));
-  const testUser = ['6abd4476dbd14d409235615ee5977821','9ea3529874a448dbaf5c54813f394bd6']
-    .find(u => !existing.has(u));
-  assert.ok(testUser, '需要一个非成员测试用户');
-  try {
-    const add = await A.addMember(t, 'project', TEST_PROJ, testUser, roleId, BASE);
-    assert.strictEqual(add.ok, true);
-    const after = await A.listMembers(t, 'project', TEST_PROJ, BASE);
-    const m = after.find(x => x.user && x.user.id === testUser);
-    assert.strictEqual(m.role.name, '管理员');
-  } finally {
-    await api(t,'DELETE',`/v1/project/projects/${TEST_PROJ}/members/${testUser}`);
+  for (const [mod, cid] of Object.entries(CONTAINERS)) {
+    const members = await A.listMembers(t, mod, cid, BASE);
+    const existing = new Set(members.map(m => m.user && m.user.id));
+    const testUser = CAND_USERS.find(u => !existing.has(u));
+    assert.ok(testUser, `${mod} 需要一个非成员测试用户`);
+    try {
+      const add = await A.addMember(t, mod, cid, testUser, roleId, BASE);
+      assert.strictEqual(add.ok, true, `${mod} addMember 应成功`);
+      const after = await A.listMembers(t, mod, cid, BASE);
+      const m = after.find(x => x.user && x.user.id === testUser);
+      assert.ok(m && m.role && m.role.name === '管理员', `${mod} 加后应为管理员`);
+    } finally {
+      await api(t, 'DELETE', A.moduleMembersEndpoint(mod, cid) + '/' + testUser);
+    }
   }
 });
