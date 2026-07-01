@@ -254,3 +254,18 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 38. **需求驱动(ASPICE)项目的「需求↔用例」横向追溯，开放 API 做不了** → 选项：①Web 自动化驱动 UI（需有效 UI 登录态）②当 UI 手工步、交付文档给「用例↔需求」覆盖对照表 ③结构上用 用户故事 做测试桥接(与需求驱动冲突,不推荐)。**纵向追溯（需求多级分解树 parent_id）开放 API 已可建**，是 ASPICE 追溯的主干。
 
 ### 字段纠正（2026-05-18）
+
+### 自定义字段（properties）写值（2026-06-30 实测）
+- `GET /v1/project/work_item_properties`（分页）→ 全组织属性表：`id`(=property_key) / `name` / `type` / `options:[{_id,text}]`。`?work_item_type_id=` 过滤**无效**，返回全部。
+- 类型→适用字段：建一条该类型工作项→`GET /v1/project/work_items/{id}` 读 `.properties` 的 key ∩ 属性表（剔系统 key）。
+- 写值：`PATCH /v1/project/work_items/{id}` body `{"properties":{"<key>":<value>}}`。
+  - select→选项 `_id`(字符串)；multi_select→`[_id]`；text/textarea→串；date→unix 秒；number→数字；member→`user_id`；members→`[user_id]`。
+  - ⚠️ 选项 `_id`/选项文字**因环境而异，必须 live 读，禁止硬编码**。错误 `100043 property_key 不存在` = key 不属于该类型。
+  - 封装见 `scripts/pingcode_custom_fields.js`（resolvePropertyCatalog / discoverTypeFields / buildPropertiesPatch / applyPropertyValues）。
+
+### 成员 / 管理员（2026-06-30 实测）
+- 四模块成员端点：`/v1/project/projects/{id}/members`、`/v1/wiki/spaces/{id}/members`、`/v1/ship/products/{id}/members`、`/v1/testhub/libraries/{id}/members`。
+- 加成员带角色：`POST …/members {user_id, role_id}`；移除：`DELETE …/members/{userId}`。
+- 「管理员」role id = `100000000000000000000001`（四模块统一，防御性可从已有成员 `role.name==管理员` 现取）。
+- Admin 识别：`/v1/directory/users/me` 在 client_credentials 下无效；`/v1/directory/users` 无 admin 标志；靠"扫已有成员里的管理员角色"（`pickAdminRoleId`/`tallyAdminUserId`）。
+- 封装见 `scripts/pingcode_admin.js`（listMembers / addMember / resolveAdminUserId / resolveAdminRoleId / sweepAdmins）。
