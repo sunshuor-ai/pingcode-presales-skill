@@ -68,3 +68,14 @@ test('sweepAdmins: admin 找不到→整步跳过并标记告警', async () => {
   assert.strictEqual(res.added, 0);
   assert.strictEqual(res.skipped_no_admin, true);
 });
+
+const api = require('./pingcode_api.js');
+test('addProjectMember: 带 roleId 时进入请求体', async () => {
+  let sent = null;
+  const origFetch = global.fetch;
+  global.fetch = async (url, opts) => { sent = JSON.parse(opts.body); return { ok:true, json: async()=>({}) }; };
+  try {
+    await api.addProjectMember('tok', 'p1', 'u1', '100000000000000000000001', 'https://b');
+    assert.deepStrictEqual(sent, { user_id:'u1', role_id:'100000000000000000000001' });
+  } finally { global.fetch = origFetch; }
+});

@@ -315,8 +315,12 @@ async function listProjectMembers(token, projectId, baseUrl = DEFAULT_BASE) {
   return (await resp.json()).values || [];
 }
 
-async function addProjectMember(token, projectId, memberId, baseUrl = DEFAULT_BASE) {
-  const resp = await fetch(`${baseUrl}/v1/project/projects/${projectId}/members`, { method: "POST", headers: H(token), body: JSON.stringify({ user_id: memberId }) });
+async function addProjectMember(token, projectId, memberId, roleId, baseUrl = DEFAULT_BASE) {
+  // 向后兼容: 老调用 addProjectMember(token, pid, mid, baseUrl) 把 URL 当 roleId 传入
+  if (typeof roleId === "string" && /^https?:\/\//.test(roleId)) { baseUrl = roleId; roleId = undefined; }
+  const body = { user_id: memberId };
+  if (roleId) body.role_id = roleId;
+  const resp = await fetch(`${baseUrl}/v1/project/projects/${projectId}/members`, { method: "POST", headers: H(token), body: JSON.stringify(body) });
   if (!resp.ok) throw new Error(`添加项目成员失败: ${await resp.text()}`);
   return resp.json();
 }
