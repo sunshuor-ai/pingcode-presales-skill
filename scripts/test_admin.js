@@ -37,3 +37,34 @@ test('containerModuleOf: manifest 容器类型→module，非容器返回 null',
   assert.strictEqual(A.containerModuleOf('test_library'), 'testhub');
   assert.strictEqual(A.containerModuleOf('work_item'), null);
 });
+
+test('sweepAdmins: 按 manifest 容器去重加管理员，幂等汇总', async () => {
+  const manifest = { items: [
+    { type:'project', id:'p1', status:'DONE' },
+    { type:'wiki_space', id:'s1', status:'DONE' },
+    { type:'work_item', id:'w1', status:'DONE' },     // 非容器，跳过
+    { type:'ship_product', id:'pr1', status:'PENDING' }, // 未完成，跳过
+  ]};
+  const added = [];
+  const deps = {
+    resolveAdminUserId: async () => 'u_owner',
+    resolveAdminRoleId: async () => '100000000000000000000001',
+    addMember: async (token, module, id, uid, rid) => { added.push({ module, id, uid, rid }); return { ok:true }; },
+  };
+  const res = await A.sweepAdmins('tok', manifest, 'https://b', { sampleProjects:['p1'] }, deps);
+  assert.deepStrictEqual(added, [
+    { module:'project', id:'p1', uid:'u_owner', rid:'100000000000000000000001' },
+    { module:'wiki',    id:'s1', uid:'u_owner', rid:'100000000000000000000001' },
+  ]);
+  assert.strictEqual(res.added, 2);
+  assert.strictEqual(res.skipped_no_admin, false);
+});
+
+test('sweepAdmins: admin 找不到→整步跳过并标记告警', async () => {
+  const manifest = { items:[{ type:'project', id:'p1', status:'DONE' }] };
+  const deps = { resolveAdminUserId: async () => null, resolveAdminRoleId: async () => 'r',
+    addMember: async () => { throw new Error('should not be called'); } };
+  const res = await A.sweepAdmins('tok', manifest, 'https://b', {}, deps);
+  assert.strictEqual(res.added, 0);
+  assert.strictEqual(res.skipped_no_admin, true);
+});
