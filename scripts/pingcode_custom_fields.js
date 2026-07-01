@@ -51,4 +51,22 @@ function formatValue(field, humanValue, ctx = {}) {
   }
 }
 
-module.exports = { resolveOptionId, formatValue };
+function discoverTypeFields(item, catalog) {
+  const keys = Object.keys((item && item.properties) || {});
+  return keys.filter(k => catalog.has(k)).map(k => ({ key: k, ...catalog.get(k) }));
+}
+
+function buildPropertiesPatch(typeFields, emittedProps, ctx = {}) {
+  const byName = new Map(typeFields.map(f => [f.name, f]));
+  const props = {}; const warnings = [];
+  for (const [name, human] of Object.entries(emittedProps || {})) {
+    const field = byName.get(name);
+    if (!field) { warnings.push(`field "${name}" not applicable to type; skipped`); continue; }
+    const { value, warn } = formatValue(field, human, ctx);
+    if (warn) warnings.push(warn);
+    if (value !== undefined) props[field.key] = value;
+  }
+  return { props, warnings };
+}
+
+module.exports = { resolveOptionId, formatValue, discoverTypeFields, buildPropertiesPatch };

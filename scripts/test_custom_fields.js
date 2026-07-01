@@ -40,3 +40,29 @@ test('formatValue multi_select: [文字]→[_id]', () => {
   const f = { type:'multi_select', name:'模块', options:[{_id:'m1',text:'A'},{_id:'m2',text:'B'}] };
   assert.deepStrictEqual(CF.formatValue(f, ['A','B']), { value:['m1','m2'] });
 });
+
+test('discoverTypeFields: item.properties keys ∩ catalog，剔系统 key', () => {
+  const catalog = new Map([
+    ['biangengleixing', { name:'变更类型', type:'select', options:[{_id:'opt_a',text:'日常变更'}] }],
+    ['fengxiandengji', { name:'风险等级', type:'select', options:[] }],
+  ]);
+  const item = { properties: { entry_status:null, operation_time:123, biangengleixing:null } };
+  const fields = CF.discoverTypeFields(item, catalog);
+  assert.deepStrictEqual(fields, [{ key:'biangengleixing', name:'变更类型', type:'select', options:[{_id:'opt_a',text:'日常变更'}] }]);
+});
+
+test('buildPropertiesPatch: 按字段名解析→key:value，跳过不适用字段并 warn', () => {
+  const typeFields = [{ key:'biangengleixing', name:'变更类型', type:'select', options:[{_id:'opt_a',text:'日常变更'}] }];
+  const emitted = { '变更类型':'日常变更', '不存在字段':'X' };
+  const { props, warnings } = CF.buildPropertiesPatch(typeFields, emitted, {});
+  assert.deepStrictEqual(props, { biangengleixing:'opt_a' });
+  assert.strictEqual(warnings.length, 1);
+  assert.match(warnings[0], /not applicable/);
+});
+
+test('buildPropertiesPatch: 非法选项产出回落值+warn但仍写入', () => {
+  const typeFields = [{ key:'biangengleixing', name:'变更类型', type:'select', options:[{_id:'opt_a',text:'日常变更'}] }];
+  const { props, warnings } = CF.buildPropertiesPatch(typeFields, { '变更类型':'乱填' }, {});
+  assert.strictEqual(props.biangengleixing, 'opt_a');
+  assert.match(warnings[0], /fell back/);
+});
