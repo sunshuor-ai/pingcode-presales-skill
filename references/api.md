@@ -265,7 +265,10 @@ GET https://open.pingcode.com/v1/auth/token?grant_type=client_credentials&client
 
 ### 成员 / 管理员（2026-06-30 实测）
 - 四模块成员端点：`/v1/project/projects/{id}/members`、`/v1/wiki/spaces/{id}/members`、`/v1/ship/products/{id}/members`、`/v1/testhub/libraries/{id}/members`。
-- 加成员带角色：`POST …/members {user_id, role_id}`；移除：`DELETE …/members/{userId}`。
+- 加成员带角色（**契约按模块不同**，2026-07-01 整机联调实测）：
+  - project / testhub：`POST …/members {user_id, role_id}`
+  - **wiki / ship**：`POST …/members {member:{id, type:"user"}, role_id}`（用 `user_id` 报 `100039 member 必须是 object`）
+  - 移除四模块统一：`DELETE …/members/{userId}`。封装 `pingcode_admin.js` 的 `memberAddBody` 按模块分派。
 - 「管理员」role id = `100000000000000000000001`（四模块统一，防御性可从已有成员 `role.name==管理员` 现取）。
 - Admin 识别：`/v1/directory/users/me` 在 client_credentials 下无效；`/v1/directory/users` 无 admin 标志；靠"扫已有成员里的管理员角色"（`pickAdminRoleId`/`tallyAdminUserId`）。
 - 封装见 `scripts/pingcode_admin.js`（listMembers / addMember / resolveAdminUserId / resolveAdminRoleId / sweepAdmins）。
