@@ -349,6 +349,8 @@ context: {客户}_context.json
 
 #### 各类型字段速查
 
+> ⚠️ 下表选项值仅为**示例**。实际选项 `_id` 与文字因环境而异，运行时一律以 `GET /v1/project/work_item_properties` 的 live options 为准，禁止硬编码（实测 daocloud-test「变更类型」是 日常/临时，非设计/工艺/材料/软件）。
+
 | 类型 | 字段 | 类型 | 选项值 |
 |------|------|------|------|
 | 工程变更申请 | 变更类型 | 单选 | 设计变更·工艺变更·材料变更·软件变更 |
@@ -498,6 +500,7 @@ GET /v1/testhub/case_types        → 取 case type_id 列表
 GET /v1/ship/ticket_types         → 取 ticket type_id 列表
 GET /v1/ship/ticket_priorities    → 取 ticket priority_id 列表
 GET /v1/directory/users           → 取用户池 (assignee/participant)
+GET /v1/project/work_item_properties → resolvePropertyCatalog：自定义字段 name↔key↔options（供 Phase 4 生成与 4.4 写值）
 ```
 
 **必须验证的字段（创建前用单条测试验证）**:
@@ -748,6 +751,18 @@ await api.batchUpdateWorkItems(token, patchList, baseUrl);
 - **跨阶段父子允许**：子可在比父更晚的阶段（客户需求 G1 → 系统需求 G2 → 软件需求 G4 一条链横跨多阶段，正是 V 模型）。PATCH 子项 phase_id 到不同于父的阶段会生效。
 - **全阶段必铺满**：垂直行业(如 ASPICE)的每个阶段门都要有内容，**G1 概念立项、G7 系统验证/量产不能空**。左侧需求分解(客户→系统→架构→软件→设计→实现)，右侧验证(软件验证 SWE.4/5/6、系统验证 SYS.4/5、量产)。建后按阶段计数自检，每阶段 >0。
 
+### 4.4 自定义字段语义填值（紧跟 4.3 phase_id 修复）
+
+- **生成约定**：自定义类型工作项的 blueprint 带 `properties`（**字段名**键、**人读值**：单选写选项文字、文本写串、日期写日期、成员写显示名）。模型不碰 key/`_id`。
+- **写入**：用 `scripts/pingcode_custom_fields.js`——4.3 回读每条工作项时顺带 `discoverTypeFields`（`.properties` keys ∩ `resolvePropertyCatalog`）→ `buildPropertiesPatch`（名→key、选项文字→`_id`、按类型格式化、跳过不适用字段）→ `applyPropertyValues` 并发 PATCH（可并进 4.3 同批 body）。
+- **容错**：非法选项回落合法默认+warn，绝不发非法 `_id`；类型无自定义字段→no-op。
+
+### 4.5 自动加管理员（Phase 4 末尾，manifest 驱动）
+
+- 用 `scripts/pingcode_admin.js` 的 `sweepAdmins(token, build_manifest, baseUrl, {formAdmin, sampleProjects, users})`：捞本轮新建的 project/wiki/ship/testhub（manifest 容器项）→ 解析 admin（表单优先，否则扫已有成员里的「管理员」）→ 并发 `addMember(role_id=管理员)`，幂等。
+- admin 找不到且表单没填 → 整步跳过并在 Phase 5/6 告警，不瞎猜。
+- **manifest 需记录容器类型**：`project / wiki_space / ship_product / test_library`（供 `containerModuleOf` 识别）。
+
 ## Phase 5: QA Review（自动质检与修复）
 
 > **进度横幅**：
@@ -805,6 +820,7 @@ node scripts/pingcode_check.js --env=... --client_id=... --client_secret=... --r
 | | Task/Bug 数（per Story） | ≥1 |
 | | 有 description 工作项比例 | ≥90% |
 | | 有 estimated_workload 工作项比例 | ≥90% |
+| | 自定义类型工作项的自定义字段填充率（`checkCustomFieldFill`） | ≥90% |
 | Wiki | 空间数 | ≥2 |
 | | 每空间页面数 | ≥2 |
 | TestHub | 测试库数 | ≥2 |
